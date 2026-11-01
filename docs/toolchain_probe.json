@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-11-01T14:56:10.280214+00:00",
+  "checks": {
+    "configured_controls": true,
+    "expected_metrics": {
+      "missing_tokens": [],
+      "ok": true
+    },
+    "grpo_config_construction": true,
+    "grpo_config_fields": {
+      "missing": [],
+      "ok": true
+    },
+    "peft_lora_hooks": {
+      "missing": [],
+      "ok": true
+    },
+    "trainer_hooks": {
+      "missing": [],
+      "ok": true
+    }
+  },
+  "config": "configs\\base.yaml",
+  "cuda": {
+    "available": false,
+    "device_count": 0,
+    "devices": [],
+    "torch": "2.6.0+cpu"
+  },
+  "errors": [],
+  "gpu_smoke": "SKIPPED_NO_GPU",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.7",
+  "schema": "autopost.toolchain-probe/1",
+  "status": "PASS",
+  "versions": {
+    "peft": "0.21.2",
+    "torch": "2.6.0+cpu",
+    "transformers": "5.20.1",
+    "trl": "1.17.1",
+    "vllm": null
+  }
+}

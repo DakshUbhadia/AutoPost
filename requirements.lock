@@ -1,2 +1,3 @@
-# Not yet generated: T4 requires resolving this lock on the Phase I GPU machine.
-# Do not install this file until the direct pins in pyproject.toml are resolved.
+# Reserved for the research-target environment and intentionally not generated.
+# Sprint 0 CPU development uses requirements/cpu-dev.lock instead.
+# Create this lock only on the actual target hardware during Sprint 10.

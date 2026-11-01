@@ -72,7 +72,7 @@ reward:
 verifier_pool: {workers: null, timeout_s_cpu: 5, container: autopost-verifier:pinned}
 
 train:
-  trl_version: <pin exact TRL release>
+  trl_version: 1.17.1
   lora: {r: 32, alpha: 64, dropout: 0.0}
   learning_rate: 2.0e-5            # start; E1a short check at two rates (budgeted)
   warmup_steps: 10                 # lineage start only
@@ -82,7 +82,7 @@ train:
     num_generations: 8
     num_iterations: 1              # one update per generation batch -> epsilon clipping largely inert
     loss_type: dapo
-    scale_rewards: none            # group-mean baseline, no std scaling (check spelling for pinned version)
+    scale_rewards: false           # group-mean baseline, no std scaling
     epsilon: 0.2
     epsilon_high: 0.28
     beta: 0.0                      # KL monitored only; switch to >0 if E1 links guardrail damage to KL
@@ -90,8 +90,10 @@ train:
     use_vllm: true
     vllm_mode: colocate
     vllm_gpu_memory_utilization: null   # E1
-    vllm_importance_sampling_correction: true   # TIS (TRL default with vLLM)
-    vllm_importance_sampling_cap: 2.0           # TRL default
+    vllm_importance_sampling_correction: true
+    vllm_importance_sampling_mode: token_truncate
+    vllm_importance_sampling_clip_min: null
+    vllm_importance_sampling_clip_max: 2.0
     temperature: 1.0
     top_p: 1.0
 

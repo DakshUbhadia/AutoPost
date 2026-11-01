@@ -2,7 +2,6 @@ from pathlib import Path
 
 from autopost.config import config_hash, load_config, unresolved_fields
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -18,5 +17,17 @@ def test_base_config_loads_and_reports_known_pin_placeholders():
     assert pins == {
         "model_profiles.qwen3_0p6b.revision",
         "model_profiles.qwen3_4b_instruct_2507.revision",
-        "train.trl_version",
     }
+
+
+def test_toolchain_controls_are_explicit():
+    cfg = load_config(ROOT / "configs/base.yaml")
+    train = cfg["train"]
+    trl = train["trl"]
+    assert train["trl_version"] == "1.17.1"
+    assert trl["loss_type"] == "dapo"
+    assert trl["scale_rewards"] is False
+    assert trl["vllm_mode"] == "colocate"
+    assert trl["vllm_importance_sampling_correction"] is True
+    assert trl["vllm_importance_sampling_mode"] == "token_truncate"
+    assert trl["vllm_importance_sampling_clip_max"] == 2.0

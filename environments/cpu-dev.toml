@@ -1,0 +1,9 @@
+schema = "autopost.environment/1"
+environment_id = "cpu-dev"
+status = "READY"
+python = "3.13.7"
+platform_scope = "portable-cpu"
+dependency_lock = "requirements/cpu-dev.lock"
+package_install = "editable-no-deps"
+models_downloaded = false
+scientific_execution_allowed = false

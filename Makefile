@@ -1,23 +1,32 @@
 .DEFAULT_GOAL := help
-.PHONY: help install selfcheck test test-all prereg-verify spike data hidden phase1 gonogo run report
+.PHONY: help install install-cpu selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
 
 help:
-	@echo install selfcheck test test-all prereg-verify spike data hidden phase1 gonogo run report
+	@echo install-cpu selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
 
-install:
-	python -m pip install -e '.[dev]' -r requirements.lock
+install: install-cpu
+
+install-cpu:
+	python -m pip install --requirement requirements/cpu-dev.lock
+	python -m pip install --no-deps --no-build-isolation --editable .
 
 selfcheck:
 	python scripts/selfcheck.py
 
 test:
-	python -m pytest -q -m 'not slow'
+	python -m pytest -q -m "not slow" --basetemp=.test-tmp
 
 test-all:
-	python -m pytest -q
+	python -m pytest -q --basetemp=.test-tmp
+
+db-init:
+	python -m autopost.cli db init
 
 prereg-verify:
 	python -m autopost.cli prereg verify
+
+toolchain-probe:
+	python scripts/probe_toolchain_api.py
 
 spike data hidden phase1 gonogo run report:
 	@echo not implemented yet (see roadmap)

@@ -7,24 +7,18 @@ name = "autopost"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-  "numpy==<pin required by T4>",
-  "torch==<pin required by T4>",
-  "transformers==<pin required by T4>",
-  "peft==<pin required by T4>",
-  "trl==<pin required by T4>",
-  "vllm==<pin required by T4>",
-  "math-verify==<pin required by T4>",
-  "sympy==<pin required by T4>",
-  "datasketch==<pin required by T4>",
-  "sentence-transformers==<pin required by T4>",
-  "pydantic==<pin required by T4>",
-  "pyyaml==<pin required by T4>",
-  "pyarrow==<pin required by T4>",
-  "huggingface-hub==<pin required by T4>",
+  "numpy==2.4.6",
+  "pydantic==2.13.5",
+  "PyYAML==6.0.3",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest==<pin required by T4>", "ruff==<pin required by T4>"]
+dev = ["pytest==9.1.1", "ruff==0.16.8"]
+toolchain-probe = [
+  "peft==0.21.2",
+  "transformers==5.20.1",
+  "trl==1.17.1",
+]
 
 [project.scripts]
 autopost = "autopost.cli:main"
@@ -41,4 +35,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
 markers = ["slow: longer synthetic validation", "gpu: requires a CUDA GPU"]

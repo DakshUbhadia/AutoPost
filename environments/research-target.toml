@@ -1,0 +1,9 @@
+schema = "autopost.environment/1"
+environment_id = "research-target"
+status = "PENDING_HARDWARE"
+reason = "Target GPU, operating system, CUDA stack, and budget are not yet available."
+dependency_lock = "PENDING_HARDWARE"
+models_downloaded = false
+scientific_execution_allowed = false
+blocks_sprints = "10-15"
+does_not_block_sprints = "0-9"

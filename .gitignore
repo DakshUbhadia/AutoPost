@@ -8,6 +8,7 @@ data/
 
 # Python environments and caches
 .venv/
+.venv-*/
 venv/
 env/
 ENV/
@@ -17,6 +18,7 @@ __pycache__/
 .pytest_cache/
 .pytest-cache-local/
 .pytest-tmp/
+.test-tmp*/
 .mypy_cache/
 .ruff_cache/
 .hypothesis/
@@ -64,3 +66,8 @@ credentials.json
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Keep local planning notes out of GitHub. These two documents are public.
+*.md
+!post_training_documentation.md
+!implementation_sprint_roadmap.md

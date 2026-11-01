@@ -1,0 +1,11 @@
+schema = "autopost.environment/1"
+environment_id = "small-gpu-dev"
+status = "PENDING_HARDWARE"
+reason = "No NVIDIA GPU or nvidia-smi was detected on 2026-11-01."
+python = "3.13.7"
+trl = "1.17.1"
+transformers = "5.20.1"
+peft = "0.21.2"
+dependency_lock = "PENDING_HARDWARE"
+models_downloaded = false
+scientific_execution_allowed = false
