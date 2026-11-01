@@ -1,0 +1,66 @@
+# Runtime data and generated state
+runs/
+data/
+# data/hidden/ must have restricted filesystem permissions.
+*.sqlite
+*.sqlite-*
+*.sqlite3
+
+# Python environments and caches
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.pytest-cache-local/
+.pytest-tmp/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+
+# Coverage, test, and profiling output
+.coverage
+.coverage.*
+.early.coverage/
+htmlcov/
+coverage.xml
+*.prof
+
+# Packaging and build output
+build/
+dist/
+*.egg-info/
+.eggs/
+wheelhouse/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+~$*
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+.aws/
+.codex/
+.agents/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini

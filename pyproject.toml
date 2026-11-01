@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autopost"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy==<pin required by T4>",
+  "torch==<pin required by T4>",
+  "transformers==<pin required by T4>",
+  "peft==<pin required by T4>",
+  "trl==<pin required by T4>",
+  "vllm==<pin required by T4>",
+  "math-verify==<pin required by T4>",
+  "sympy==<pin required by T4>",
+  "datasketch==<pin required by T4>",
+  "sentence-transformers==<pin required by T4>",
+  "pydantic==<pin required by T4>",
+  "pyyaml==<pin required by T4>",
+  "pyarrow==<pin required by T4>",
+  "huggingface-hub==<pin required by T4>",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==<pin required by T4>", "ruff==<pin required by T4>"]
+
+[project.scripts]
+autopost = "autopost.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"autopost.store" = ["schema.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: longer synthetic validation", "gpu: requires a CUDA GPU"]
