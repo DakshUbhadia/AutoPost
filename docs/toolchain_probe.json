@@ -1,7 +1,13 @@
 {
-  "checked_at": "2026-11-01T14:56:10.280214+00:00",
+  "api_surface_status": "PASS",
+  "blocking_reasons": [],
+  "checked_at": "2026-11-01T16:41:22.481346+00:00",
   "checks": {
     "configured_controls": true,
+    "dependency_lock": {
+      "mismatches": {},
+      "ok": true
+    },
     "expected_metrics": {
       "missing_tokens": [],
       "ok": true
@@ -25,19 +31,20 @@
     "available": false,
     "device_count": 0,
     "devices": [],
-    "torch": "2.6.0+cpu"
+    "torch": "2.6.0"
   },
+  "dependency_lock": "requirements\\toolchain-probe.lock",
   "errors": [],
-  "gpu_smoke": "SKIPPED_NO_GPU",
+  "gpu_runtime_status": "PENDING_HARDWARE",
   "platform": "Windows-11-10.0.26200-SP0",
   "python": "3.13.7",
-  "schema": "autopost.toolchain-probe/1",
-  "status": "PASS",
+  "schema": "autopost.toolchain-probe/2",
   "versions": {
     "peft": "0.21.2",
-    "torch": "2.6.0+cpu",
+    "torch": "2.6.0",
     "transformers": "5.20.1",
     "trl": "1.17.1",
     "vllm": null
-  }
+  },
+  "vllm_runtime_status": "NOT_TESTED"
 }

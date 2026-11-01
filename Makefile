@@ -1,13 +1,17 @@
 .DEFAULT_GOAL := help
-.PHONY: help install install-cpu selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
+.PHONY: help install install-cpu install-toolchain-probe selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
 
 help:
-	@echo install-cpu selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
+	@echo install-cpu install-toolchain-probe selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
 
 install: install-cpu
 
 install-cpu:
 	python -m pip install --requirement requirements/cpu-dev.lock
+	python -m pip install --no-deps --no-build-isolation --editable .
+
+install-toolchain-probe:
+	python -m pip install --requirement requirements/toolchain-probe.lock
 	python -m pip install --no-deps --no-build-isolation --editable .
 
 selfcheck:

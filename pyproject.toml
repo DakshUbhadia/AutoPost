@@ -16,6 +16,7 @@ dependencies = [
 dev = ["pytest==9.1.1", "ruff==0.16.8"]
 toolchain-probe = [
   "peft==0.21.2",
+  "torch==2.6.0",
   "transformers==5.20.1",
   "trl==1.17.1",
 ]

@@ -15,7 +15,7 @@ from pathlib import Path
 
 import yaml
 
-SCHEMA = "autopost.toolchain-probe/1"
+SCHEMA = "autopost.toolchain-probe/2"
 REQUIRED_GRPO_FIELDS = {
     "beta",
     "epsilon",
@@ -62,6 +62,24 @@ def _version(distribution: str) -> str | None:
         return None
 
 
+def load_locked_versions(path: Path) -> dict[str, str]:
+    """Load a fully pinned, marker-free requirements lock."""
+    locked: dict[str, str] = {}
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "==" not in line or ";" in line or line.startswith(("-", ".")):
+            raise ValueError(f"unsupported lock entry at {path}:{line_number}: {line}")
+        name, version = line.split("==", 1)
+        if not name or not version:
+            raise ValueError(f"invalid lock entry at {path}:{line_number}: {line}")
+        locked[name] = version
+    if not locked:
+        raise ValueError(f"dependency lock is empty: {path}")
+    return locked
+
+
 def _load_train_config(path: Path) -> tuple[str, dict]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict) or not isinstance(document.get("train"), dict):
@@ -89,7 +107,18 @@ def _cuda_summary() -> dict:
         return {"torch": _version("torch"), "available": False, "device_count": 0, "error": str(exc)}
 
 
-def run_probe(config_path: Path) -> tuple[dict, int]:
+def runtime_statuses(cuda_available: bool) -> tuple[str, str, list[str]]:
+    """Describe runtime evidence separately from static API evidence."""
+    if cuda_available:
+        return (
+            "REQUIRED_NOT_RUN",
+            "NOT_TESTED",
+            ["CUDA GPU detected: run the one-to-two-step dev smoke before Sprint 0 can close"],
+        )
+    return "PENDING_HARDWARE", "NOT_TESTED", []
+
+
+def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
     errors: list[str] = []
     checks: dict[str, object] = {}
     versions = {
@@ -97,6 +126,20 @@ def run_probe(config_path: Path) -> tuple[dict, int]:
         for name in ("trl", "transformers", "peft", "vllm", "torch")
     }
     cuda = _cuda_summary()
+
+    try:
+        locked_versions = load_locked_versions(lock_path)
+        mismatches = {
+            name: {"expected": expected, "installed": _version(name)}
+            for name, expected in locked_versions.items()
+            if _version(name) != expected
+        }
+        checks["dependency_lock"] = {"ok": not mismatches, "mismatches": mismatches}
+        if mismatches:
+            errors.append(f"installed environment disagrees with {lock_path}")
+    except (OSError, ValueError) as exc:
+        checks["dependency_lock"] = {"ok": False, "error": str(exc)}
+        errors.append(str(exc))
 
     try:
         expected_trl, configured = _load_train_config(config_path)
@@ -177,34 +220,35 @@ def run_probe(config_path: Path) -> tuple[dict, int]:
         checks["peft_lora_hooks"] = False
         errors.append(f"PEFT API inspection failed: {type(exc).__name__}: {exc}")
 
-    if cuda.get("available"):
-        gpu_smoke = "REQUIRED_NOT_RUN"
-        errors.append("CUDA GPU detected: add and run the one-to-two-step dev smoke before Sprint 0 can close")
-    else:
-        gpu_smoke = "SKIPPED_NO_GPU"
+    api_surface_status = "PASS" if not errors else "BLOCKED"
+    gpu_runtime_status, vllm_runtime_status, blocking_reasons = runtime_statuses(bool(cuda.get("available")))
 
     result = {
         "schema": SCHEMA,
         "checked_at": datetime.now(UTC).isoformat(),
-        "status": "PASS" if not errors else "BLOCKED",
+        "api_surface_status": api_surface_status,
+        "gpu_runtime_status": gpu_runtime_status,
+        "vllm_runtime_status": vllm_runtime_status,
         "python": sys.version.split()[0],
         "platform": platform.platform(),
         "config": str(config_path),
+        "dependency_lock": str(lock_path),
         "versions": versions,
         "cuda": cuda,
-        "gpu_smoke": gpu_smoke,
         "checks": checks,
         "errors": errors,
+        "blocking_reasons": blocking_reasons,
     }
-    return result, 0 if not errors else 2
+    return result, 0 if api_surface_status == "PASS" and not blocking_reasons else 2
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/base.yaml"))
+    parser.add_argument("--lock", type=Path, default=Path("requirements/toolchain-probe.lock"))
     parser.add_argument("--output", type=Path, default=Path("docs/toolchain_probe.json"))
     args = parser.parse_args(argv)
-    result, return_code = run_probe(args.config)
+    result, return_code = run_probe(args.config, args.lock)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, sort_keys=True))

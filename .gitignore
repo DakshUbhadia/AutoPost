@@ -67,7 +67,16 @@ credentials.json
 Thumbs.db
 Desktop.ini
 
-# Keep local planning notes out of GitHub. These two documents are public.
-*.md
-!post_training_documentation.md
-!implementation_sprint_roadmap.md
+# Local-only planning notes. New Markdown files remain visible to Git by default.
+CLAUDE.md
+docs/ENVIRONMENTS.md
+docs/OPEN_ISSUES.md
+docs/PINS.md
+docs/PLACEHOLDERS.md
+docs/PREREG_DECISIONS.md
+docs/SPRINT_0_AUDIT.md
+docs/STATUS.md
+docs/architecture.md
+implementation_step_1.md
+project_architecture_revision3_change_plan.md
+sprint_roadmap_change_instructions.md

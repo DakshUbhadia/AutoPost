@@ -1,0 +1,11 @@
+schema = "autopost.environment/1"
+environment_id = "toolchain-probe"
+status = "READY"
+python = "3.13.7"
+platform_scope = "windows-cpu-api-inspection"
+dependency_lock = "requirements/toolchain-probe.lock"
+package_install = "editable-no-deps"
+models_downloaded = false
+vllm_runtime_tested = false
+gpu_runtime_tested = false
+scientific_execution_allowed = false
