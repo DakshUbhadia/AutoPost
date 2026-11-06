@@ -264,6 +264,19 @@ def examples():
         ),
         c.AcceptanceReceipt(job_id=spec.job_id, disposition="accepted"),
         c.StagedArtifact(staging_id="stage-1", expected=artifact.artifact_id),
+        c.AttemptRecord(
+            handle=c.JobHandle(job_id=spec.job_id, attempt=1),
+            status="succeeded",
+            result=train_result,
+        ),
+        c.AuditEvent(
+            event_id=1,
+            run_id="run-1",
+            job_id=spec.job_id,
+            kind="result_accepted",
+            payload={"result_digest": train_result.result_digest},
+            created_at=WHEN,
+        ),
     ]
 
 

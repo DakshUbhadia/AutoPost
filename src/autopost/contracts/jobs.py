@@ -63,6 +63,7 @@ class JobError(DurableModel):
         "corrupt_artifact",
         "conflict",
         "stale_parent",
+        "budget_exhausted",
     ]
     message: str
     retryable: bool = False

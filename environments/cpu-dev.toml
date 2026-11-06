@@ -7,3 +7,6 @@ dependency_lock = "requirements/cpu-dev.lock"
 package_install = "editable-no-deps"
 models_downloaded = false
 scientific_execution_allowed = false
+contract_schema_version = 1
+metadata_schema_version = 2
+artifact_layout_version = 1

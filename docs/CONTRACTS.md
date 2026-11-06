@@ -1,6 +1,6 @@
 # Revision 3 contracts and configuration
 
-Sprint 1 implements the boundaries defined in architecture §§8, 11.1 and 27. Durable values live in `src/autopost/contracts/`; implementations of stores, executors and generation providers remain later-sprint work.
+Sprint 1 implements the boundaries defined in architecture §§8, 11.1 and 27. Durable values live in `src/autopost/contracts/`. Sprint 2 supplies the [local stores and CPU fixture executor](STORES.md); real model execution and generation providers remain later-sprint work.
 
 ## Wire rules
 
@@ -45,7 +45,7 @@ Results expose `result_digest`, a canonical hash of semantic outputs excluding a
 |---|---|
 | `config_id` / `config_hash` | Schema, experiment, model, data; execution topology is separate |
 | `merged_config_sha256` | All normalized composed values |
-| `stack_id` / `stack_hash` | Config ID, every execution setting, dependency lock digest and contract versions |
+| `stack_id` / `stack_hash` | Config ID, every execution setting, dependency lock digest, contract versions and metadata schema version |
 | `ModelSpec.spec_id` | Complete canonical model spec |
 | `ExecutionProfile.profile_id` | Complete canonical execution profile |
 
@@ -65,3 +65,5 @@ For preregistration validation/freezing, repeat the same profile selections and 
 Historical `autopost.prereg/1` records keep their canonical bytes (including the trailing newline) and file-hash verification. Legacy combined configuration can still be read for those historical records; split config requires `autopost.prereg/2`. Existing frozen records are never rewritten.
 
 `autopost.interfaces` retains domain/scorer/statistics/gate contracts, reexports the new backend protocols, and uses separate model/execution inputs for trainers. `TrainState` is a transitional alias for the path-free `StateManifest`. `ModelProfile` was removed; no backend implementation depended on it. The root `interfaces.py` delegates to the installed package, and root `base.yaml` composes the same defaults for companion-file users. The existing scorer/statistics/gate algorithms are unchanged.
+
+Sprint 2 adds `AttemptRecord` and `AuditEvent`, generic initialization/journal/query methods on `MetadataStore`, and `corrupt_artifact` / `budget_exhausted` acceptance outcomes. Durable record schemas remain version 1. Metadata storage is version 2, tracked separately from wire compatibility and included in newly calculated stack IDs. Historical frozen preregistration files and their file-hash verification are unchanged.

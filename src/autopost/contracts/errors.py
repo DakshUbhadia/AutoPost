@@ -14,6 +14,7 @@ class ErrorCode(str, Enum):
     CORRUPT_ARTIFACT = "corrupt_artifact"
     CONFLICT = "conflict"
     STALE_PARENT = "stale_parent"
+    BUDGET_EXHAUSTED = "budget_exhausted"
 
 
 class CompatibilityError(ValueError):

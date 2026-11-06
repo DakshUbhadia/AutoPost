@@ -30,6 +30,8 @@ from .models import ExecutionProfile, ModelSpec, SamplingConfig
 from .persistence import (
     AcceptanceEffects,
     AcceptanceReceipt,
+    AttemptRecord,
+    AuditEvent,
     BudgetCharge,
     MetadataRecord,
     PointerUpdate,
@@ -73,6 +75,8 @@ __all__ = [
     "ArtifactManifest",
     "ArtifactRef",
     "ArtifactStore",
+    "AttemptRecord",
+    "AuditEvent",
     "BudgetCharge",
     "CapabilityReport",
     "CapabilitySpec",

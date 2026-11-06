@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := help
-.PHONY: help install install-cpu install-toolchain-probe selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
+.PHONY: help install install-cpu install-toolchain-probe selfcheck test test-all db-init db-migrate fixture prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
 
 help:
-	@echo install-cpu install-toolchain-probe selfcheck test test-all db-init prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
+	@echo install-cpu install-toolchain-probe selfcheck test test-all db-init db-migrate fixture prereg-verify toolchain-probe spike data hidden phase1 gonogo run report
 
 install: install-cpu
 
@@ -25,6 +25,12 @@ test-all:
 
 db-init:
 	python -m autopost.cli db init
+
+db-migrate:
+	python -m autopost.cli db migrate
+
+fixture:
+	python -m autopost.cli fixture run
 
 prereg-verify:
 	python -m autopost.cli prereg verify

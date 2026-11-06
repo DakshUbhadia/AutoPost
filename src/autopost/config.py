@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from autopost.contracts import ExecutionProfile, ModelSpec, content_hash
+from autopost.contracts.persistence import METADATA_SCHEMA_VERSION
 
 
 def _mapping(path: Path) -> dict:
@@ -92,6 +93,7 @@ def stack_hash(cfg: dict, *, lock_sha256: str) -> str:
             "config_id": config_hash(cfg),
             "execution": cfg.get("execution", {}),
             "lock_sha256": lock_sha256,
+            "metadata_schema_version": METADATA_SCHEMA_VERSION,
             "contracts": {
                 name: 1
                 for name in (

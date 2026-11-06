@@ -95,3 +95,12 @@ def test_profile_paths_do_not_enter_hashes(tmp_path):
     base.write_text(yaml.safe_dump(cfg), encoding="utf-8")
     with pytest.raises(ValueError, match="unsupported"):
         load_config(base)
+
+
+def test_metadata_schema_is_part_of_stack_identity(monkeypatch):
+    from autopost import config
+
+    cfg = load_config(ROOT / "configs/base.yaml")
+    before = stack_hash(cfg, lock_sha256="a" * 64)
+    monkeypatch.setattr(config, "METADATA_SCHEMA_VERSION", 99)
+    assert stack_hash(cfg, lock_sha256="a" * 64) != before
