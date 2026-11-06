@@ -47,3 +47,15 @@ def test_runtime_statuses_do_not_claim_gpu_or_vllm_execution():
     assert gpu == "REQUIRED_NOT_RUN"
     assert vllm == "NOT_TESTED"
     assert blockers
+
+
+def test_probe_reads_split_config_without_changing_explicit_algorithm_controls():
+    version, configured = PROBE._load_train_config(PATH.parents[1] / "configs/base.yaml")
+    assert version == "1.17.1"
+    assert PROBE.REQUIRED_GRPO_FIELDS <= configured.keys()
+    assert configured["vllm_importance_sampling_correction"] is True
+    assert configured["vllm_importance_sampling_mode"] == "token_truncate"
+    assert configured["vllm_importance_sampling_clip_max"] == 2.0
+    assert configured["vllm_mode"] == "colocate"
+    assert configured["loss_type"] == "dapo"
+    assert configured["scale_rewards"] is False

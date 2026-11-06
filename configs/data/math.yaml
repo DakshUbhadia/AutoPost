@@ -1,0 +1,44 @@
+schema_version: 1
+stage_A:
+  train_sources:
+  - gsm8k_train
+  - math_train_l1_l3
+  - bigmath_filtered_easy
+  transfer_source:
+  - svamp
+  - asdiv_numeric
+stage_B:
+  train_sources:
+  - math_train_all
+  - bigmath_filtered
+  transfer_source:
+  - omnimath_numeric
+  secondary_descriptive:
+  - competitions_after_2025_08_numeric
+measurement_answer_types:
+- int
+- rational
+- decimal
+dedup:
+  minhash_ngram: 5
+  minhash_threshold: 0.8
+  embed_model: bge-small-en-v1.5
+  embed_cos: 0.92
+  embed_model_revision: <pin commit sha>
+low_entropy_rule:
+  exclude_multiple_choice: true
+  exclude_yes_no: true
+  int_abs_le: 10
+split_by: cluster
+stratify_gate_sets:
+  strat_samples: 8
+  drop_if_base_passrate_ge: 0.95
+sizes_in_clusters:
+  pilot: null
+  screen: null
+  gate_a: null
+  gate_b: null
+  transfer_guard: null
+  transfer_sealed: null
+  hidden_audit: null
+  hidden_sealed: null

@@ -1,0 +1,17 @@
+schema_version: 1
+model_id: Qwen/Qwen3-0.6B
+revision: <pin commit sha>
+tokenizer_id: Qwen/Qwen3-0.6B
+tokenizer_revision: <pin commit sha>
+chat_template_args:
+  enable_thinking: false
+max_context_tokens: null
+lora_targets:
+- q_proj
+- k_proj
+- v_proj
+- o_proj
+- gate_proj
+- up_proj
+- down_proj
+mode: non-thinking

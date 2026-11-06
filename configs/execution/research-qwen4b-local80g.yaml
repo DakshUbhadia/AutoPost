@@ -1,0 +1,45 @@
+schema_version: 1
+backend: local-reference
+dtype: bfloat16
+quantization: null
+generation_backend: vllm-colocate
+training_backend: trl@1.17.1
+max_concurrency: 1
+tensor_parallel_size: 1
+gradient_checkpointing: true
+cpu_offload: false
+rollout_sampling:
+  schema_version: 1
+  temperature: 1.0
+  top_p: 1.0
+  top_k: -1
+  min_p: 0.0
+  max_new_tokens: null
+eval_sampling:
+  schema_version: 1
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20
+  min_p: 0.0
+  max_new_tokens: null
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.0
+importance_sampling:
+  correction: true
+  mode: token_truncate
+  clip_min: null
+  clip_max: 2.0
+  required_metrics:
+  - importance_sampling_ratio
+  - sampling_logp_difference
+backend_options:
+  vllm_mode: colocate
+  use_vllm: true
+  vllm_gpu_memory_utilization: null
+  verifier_pool:
+    workers: null
+    timeout_s_cpu: 5
+    container: autopost-verifier:pinned
+validation_mode: research

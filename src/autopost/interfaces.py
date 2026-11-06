@@ -1,4 +1,4 @@
-"""autopost/interfaces.py  (Revision 2)
+"""autopost/interfaces.py  (Revision 3)
 
 Core contracts for the Gated Continual RLVR system.
 
@@ -23,15 +23,19 @@ Revision 2 changes (architecture doc, Appendix D):
 from __future__ import annotations
 
 import enum
-import hashlib
-import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Iterator, Literal, Mapping, Protocol, Sequence
 
 try:                                    # repository layout
+    from autopost.contracts import (ModelSpec, ExecutionProfile, SamplingConfig, StateManifest, StateRef,
+                                    JobExecutor, MetadataStore, ArtifactStore,
+                                    RolloutProvider, EvalGenerationProvider, content_hash)
     from autopost.eval.stats import BootResult
 except ImportError:                     # flat companion-file layout
+    from contracts import (ModelSpec, ExecutionProfile, SamplingConfig, StateManifest, StateRef,
+                           JobExecutor, MetadataStore, ArtifactStore,
+                           RolloutProvider, EvalGenerationProvider, content_hash)
     from stats import BootResult
 
 AnswerType = Literal["int", "rational", "decimal", "expr", "interval", "tuple"]
@@ -39,11 +43,11 @@ MEASURABLE_TYPES: frozenset[str] = frozenset({"int", "rational", "decimal"})  # 
 Split = Literal[
     "train", "dev", "pilot", "screen", "gate_a", "gate_a_reservoir", "gate_b",
     "gate_b_reservoir", "transfer_guard", "transfer_sealed",
-    "hidden_audit", "hidden_sealed",
+    "hidden_dev", "hidden_audit", "hidden_sealed",
 ]
 MEASUREMENT_SPLITS: frozenset[str] = frozenset({
     "pilot", "screen", "gate_a", "gate_a_reservoir", "gate_b", "gate_b_reservoir",
-    "transfer_guard", "transfer_sealed", "hidden_audit", "hidden_sealed",
+    "transfer_guard", "transfer_sealed", "hidden_dev", "hidden_audit", "hidden_sealed",
 })
 VerdictStatus = Literal[
     "ok", "wrong", "no_answer", "multiple_answers", "truncated", "parse_error", "timeout"
@@ -51,8 +55,8 @@ VerdictStatus = Literal[
 
 
 def stable_hash(obj: object) -> str:
-    blob = json.dumps(obj, sort_keys=True, default=str).encode()
-    return hashlib.sha256(blob).hexdigest()[:16]
+    """Compatibility name for full canonical SHA-256 (never default=str)."""
+    return content_hash(obj)
 
 
 # --------------------------------------------------------------------------
@@ -94,36 +98,6 @@ class PromptTemplate:
 
 
 @dataclass(frozen=True)
-class SamplingConfig:
-    temperature: float
-    top_p: float
-    top_k: int               # -1 = disabled
-    min_p: float
-    max_new_tokens: int
-
-
-@dataclass(frozen=True)
-class ModelProfile:
-    name: str
-    hf_repo: str
-    revision: str
-    tokenizer_revision: str
-    dtype: Literal["bfloat16", "float16"]
-    chat_template_kwargs: Mapping[str, object]
-    rollout_sampling: SamplingConfig         # T=1, top_p=1, top_k=-1: on-policy
-    eval_sampling: SamplingConfig            # vendor guidance (T=0.7, top_p=0.8, top_k=20, min_p=0)
-    max_prompt_tokens: int
-    lora_target_modules: tuple[str, ...]
-
-    def render(self, tokenizer, task: Task, template: PromptTemplate) -> str:
-        messages = [{"role": "user",
-                     "content": template.user_format.format(problem=task.problem)}]
-        return tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True,
-            **self.chat_template_kwargs)
-
-
-@dataclass(frozen=True)
 class Completion:
     completion_id: str       # raw text is stored for every rollout and eval read
     task_id: str
@@ -150,15 +124,8 @@ class RewardResult:
     components: Mapping[str, float]
 
 
-@dataclass(frozen=True)
-class TrainState:
-    state_id: str
-    parent_id: str | None
-    path: str
-    global_step: int
-    config_hash: str
-    stack_hash: str
-    verifier_version: str    # needed to invalidate state derived from a buggy verifier
+# Transitional name for existing lineage annotations; location-independent.
+TrainState = StateManifest
 
 
 @dataclass
@@ -304,8 +271,8 @@ class OnPolicyTrainer(ABC):
     trainer_id: str
 
     @abstractmethod
-    def train(self, start: TrainState, prompts: Sequence[Task], verifier: TrainVerifier,
-              reward: RewardFunction, profile: ModelProfile, steps: int) -> TrainResult: ...
+    def train(self, start: StateRef, prompts: Sequence[Task], verifier: TrainVerifier,
+              reward: RewardFunction, model: ModelSpec, execution: ExecutionProfile, steps: int) -> TrainResult: ...
 
 
 @dataclass(frozen=True)
@@ -321,8 +288,8 @@ class OfflineTrainer(ABC):
     trainer_id: str
 
     @abstractmethod
-    def train(self, start: TrainState, examples: Sequence[OfflineExample],
-              profile: ModelProfile, steps: int) -> TrainResult: ...
+    def train(self, start: StateRef, examples: Sequence[OfflineExample],
+              model: ModelSpec, execution: ExecutionProfile, steps: int) -> TrainResult: ...
 
 
 def assert_not_measurement(tasks: Sequence[Task]) -> None:

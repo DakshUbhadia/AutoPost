@@ -2,7 +2,7 @@
 
 AutoPost is a local-first reference implementation of an auditable post-training control plane for verifiable mathematical rewards.
 
-Sprint 0 establishes the reproducible development and API-validation baseline. Small-model work validates engineering behavior only; it is not evidence of target-model scientific improvement.
+Revision 3 contracts and split configuration build on the reproducible Sprint 0 development baseline. Small-model work validates engineering behavior only; it is not evidence of target-model scientific improvement.
 
 ## CPU development
 
@@ -31,3 +31,15 @@ The checked-in probe lock reproduces the validated CPython 3.13.7 Windows CPU in
 
 - [Architecture and scientific protocol](post_training_documentation.md)
 - [Implementation sprint roadmap](implementation_sprint_roadmap.md)
+- [Contracts, configuration, and compatibility](docs/CONTRACTS.md)
+- [Sprint 1 acceptance evidence](docs/SPRINT_1_AUDIT.md)
+
+Inspect the composed development configuration and identities:
+
+```text
+python -m autopost.cli config show
+python -m autopost.cli config hashes
+python -m autopost.cli config placeholders
+```
+
+`configs/base.yaml` contains experiment semantics and selects separate model, execution, and data files. `--model`, `--execution`, and `--data` override these selections; relative paths resolve beside the base file. For example, `config hashes --execution execution/smoke.yaml` selects the fixture profile. This selects configuration only; backend execution arrives in later sprints.

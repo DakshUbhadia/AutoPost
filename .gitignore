@@ -1,6 +1,6 @@
 # Runtime data and generated state
 runs/
-data/
+/data/
 # data/hidden/ must have restricted filesystem permissions.
 *.sqlite
 *.sqlite-*

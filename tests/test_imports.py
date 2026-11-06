@@ -17,6 +17,7 @@ def test_package_imports():
 def test_flat_fallback(tmp_path):
     shutil.copy(ROOT / "src/autopost/interfaces.py", tmp_path / "interfaces.py")
     shutil.copy(ROOT / "src/autopost/eval/stats.py", tmp_path / "stats.py")
+    shutil.copytree(ROOT / "src/autopost/contracts", tmp_path / "contracts")
     code = 'import sys; sys.modules["autopost"] = None; sys.path.insert(0, r"%s"); import interfaces, stats' % tmp_path
     subprocess.run([sys.executable, "-c", code], check=True)
 

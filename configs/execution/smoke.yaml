@@ -1,0 +1,38 @@
+schema_version: 1
+backend: fixture
+dtype: float32
+quantization: null
+generation_backend: fixture
+training_backend: fixture
+max_concurrency: 1
+tensor_parallel_size: 1
+gradient_checkpointing: false
+cpu_offload: false
+rollout_sampling:
+  schema_version: 1
+  temperature: 1.0
+  top_p: 1.0
+  top_k: -1
+  min_p: 0.0
+  max_new_tokens: 64
+eval_sampling:
+  schema_version: 1
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20
+  min_p: 0.0
+  max_new_tokens: 64
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.0
+importance_sampling:
+  correction: true
+  mode: token_truncate
+  clip_min: null
+  clip_max: 2.0
+  required_metrics:
+  - importance_sampling_ratio
+  - sampling_logp_difference
+backend_options: {}
+validation_mode: smoke

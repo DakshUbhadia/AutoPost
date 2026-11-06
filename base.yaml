@@ -1,132 +1,145 @@
-# configs/base.yaml  (Revision 2)
-# start:       initial value, checked in Phase I
-# null # E<n>: set from the named Phase I experiment, then frozen in prereg.json
-# Never edited during a run; any change after a halt is a logged human change
-# (consumes the human-change budget and forces a Gate-A refresh).
-
-stage: B                          # A = Qwen3-0.6B plumbing; B = Qwen3-4B-Instruct-2507
-
-model_profiles:
-  qwen3_0p6b:                     # Stage A: plumbing validation only
-    hf_repo: Qwen/Qwen3-0.6B
-    revision: <pin commit sha>
-    dtype: bfloat16
-    chat_template_kwargs: {enable_thinking: false}
-    rollout_sampling: {temperature: 1.0, top_p: 1.0, top_k: -1, min_p: 0.0, max_new_tokens: null}  # E1-equivalent run
-    eval_sampling:    {temperature: 0.7, top_p: 0.8, top_k: 20, min_p: 0.0, max_new_tokens: null}
-    lora_target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
-  qwen3_4b_instruct_2507:         # Stage B: the target
-    hf_repo: Qwen/Qwen3-4B-Instruct-2507
-    revision: <pin commit sha>
-    dtype: bfloat16
-    chat_template_kwargs: {}      # non-thinking only model
-    rollout_sampling: {temperature: 1.0, top_p: 1.0, top_k: -1, min_p: 0.0, max_new_tokens: null}  # E1: vendor suggests 16,384 for most queries
-    eval_sampling:    {temperature: 0.7, top_p: 0.8, top_k: 20, min_p: 0.0, max_new_tokens: null}  # vendor guidance
-    lora_target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
-
+# Compatibility entrypoint. Prefer configs/base.yaml.
+schema_version: 1
+profiles:
+  model: configs/models/qwen3_0p6b.yaml
+  execution: configs/execution/dev-qwen06b-local24g.yaml
+  data: configs/data/math.yaml
 templates:
-  T_train: {role: train, answer_marker: boxed,
-            user_format: "{problem}\n\nPlease reason step by step, and put your final answer within \\boxed{}."}
-  # Evaluation-only templates (never used in training). Final set of 3-5 chosen in E8.
-  E1_answer_line: {role: eval, answer_marker: answer_line,
-            user_format: "Solve the following problem. End your response with a final line of the form 'Answer: <answer>'.\n\n{problem}"}
-  E2_plain: {role: eval, answer_marker: final_answer_phrase,
-            user_format: "{problem}\n\nShow your work, then state the final answer as 'The final answer is <answer>.'"}
-  E3_terse: {role: eval, answer_marker: answer_line,
-            user_format: "Problem: {problem}\nGive a brief solution and finish with 'Answer: <answer>'."}
-  E4_boxed_reworded: {role: eval, answer_marker: boxed,
-            user_format: "Here is a math question.\n{problem}\nWork it out and write the result in \\boxed{}."}
+  T_train:
+    role: train
+    answer_marker: boxed
+    user_format: '{problem}
 
-data:
-  stage_A:
-    train_sources: [gsm8k_train, math_train_l1_l3, bigmath_filtered_easy]
-    transfer_source: [svamp, asdiv_numeric]
-  stage_B:
-    train_sources: [math_train_all, bigmath_filtered]            # symbolic answers allowed in training
-    transfer_source: [omnimath_numeric]                           # excluded from training by source lineage
-    secondary_descriptive: [competitions_after_2025_08_numeric]   # reported only; too small to gate
-  measurement_answer_types: [int, rational, decimal]               # measurement sets restricted
-  dedup: {minhash_ngram: 5, minhash_threshold: 0.8, embed_model: bge-small-en-v1.5, embed_cos: 0.92}  # start
-  low_entropy_rule: {exclude_multiple_choice: true, exclude_yes_no: true, int_abs_le: 10}
-  split_by: cluster
-  stratify_gate_sets: {strat_samples: 8, drop_if_base_passrate_ge: 0.95}   # start; E3 checks
-  sizes_in_clusters: {pilot: null, screen: null, gate_a: null, gate_b: null,
-                      transfer_guard: null, transfer_sealed: null,
-                      hidden_audit: null, hidden_sealed: null}             # E1 + E3 (program-level for hidden)
 
+      Please reason step by step, and put your final answer within \boxed{}.'
+  E1_answer_line:
+    role: eval
+    answer_marker: answer_line
+    user_format: 'Solve the following problem. End your response with a final line
+      of the form ''Answer: <answer>''.
+
+
+      {problem}'
+  E2_plain:
+    role: eval
+    answer_marker: final_answer_phrase
+    user_format: '{problem}
+
+
+      Show your work, then state the final answer as ''The final answer is <answer>.'''
+  E3_terse:
+    role: eval
+    answer_marker: answer_line
+    user_format: 'Problem: {problem}
+
+      Give a brief solution and finish with ''Answer: <answer>''.'
+  E4_boxed_reworded:
+    role: eval
+    answer_marker: boxed
+    user_format: 'Here is a math question.
+
+      {problem}
+
+      Work it out and write the result in \boxed{}.'
 curriculum:
   group_size: 8
-  min_signal_prob: 0.5            # band derived: G=8 -> [0.083, 0.917]
+  min_signal_prob: 0.5
   estimate_k: 8
   edge_margin: 0.05
-  quotas: {by: [source_id, skill], max_share: 0.5, low_entropy_max_share: 0.1}
-  cluster_exposure_cap: 4         # global counts in V1
-  quarantine: {consensus_share: 0.6, min_estimates: 2}     # rule (b) only
-  audit_flag_persistent_inband_promotions: 3               # flag only, never excludes
-
+  quotas:
+    by:
+    - source_id
+    - skill
+    max_share: 0.5
+    low_entropy_max_share: 0.1
+  cluster_exposure_cap: 4
+  quarantine:
+    consensus_share: 0.6
+    min_estimates: 2
+    action: flag
+    exclusion_requires: independent_verification
+  audit_flag_persistent_inband_promotions: 3
 reward:
-  type: binary                     # truncated = 0
-  overlong_window: 0               # off; switch on only if E1 shows a truncation problem
+  type: binary
+  overlong_window: 0
   overlong_max_penalty: 0.0
-
-verifier_pool: {workers: null, timeout_s_cpu: 5, container: autopost-verifier:pinned}
-
 train:
-  trl_version: <pin exact TRL release>
-  lora: {r: 32, alpha: 64, dropout: 0.0}
-  learning_rate: 2.0e-5            # start; E1a short check at two rates (budgeted)
-  warmup_steps: 10                 # lineage start only
+  learning_rate: 2.0e-05
+  warmup_steps: 10
   prompts_per_step: 16
-  checkpoint_every_steps: 50       # N: resumability + monitor cadence
+  checkpoint_every_steps: 50
   trl:
     num_generations: 8
-    num_iterations: 1              # one update per generation batch -> epsilon clipping largely inert
+    num_iterations: 1
     loss_type: dapo
-    scale_rewards: none            # group-mean baseline, no std scaling (check spelling for pinned version)
+    scale_rewards: false
     epsilon: 0.2
     epsilon_high: 0.28
-    beta: 0.0                      # KL monitored only; switch to >0 if E1 links guardrail damage to KL
+    beta: 0.0
     mask_truncated_completions: false
-    use_vllm: true
-    vllm_mode: colocate
-    vllm_gpu_memory_utilization: null   # E1
-    vllm_importance_sampling_correction: true   # TIS (TRL default with vLLM)
-    vllm_importance_sampling_cap: 2.0           # TRL default
-    temperature: 1.0
-    top_p: 1.0
-
 eval:
-  k: {screen: null, gate: null, transfer_guard: null, battery: null, hidden: null}   # E3/E4
-  k_ref_multiplier: 2              # start; reference samples are shared across comparisons
+  k:
+    screen: null
+    gate: null
+    transfer_guard: null
+    battery: null
+    hidden: null
+  k_ref_multiplier: 2
   gate_b_fresh_reference: true
-  bootstrap: {unit: cluster, n_boot: 4000}
+  bootstrap:
+    unit: cluster
+    n_boot: 4000
   store_raw_completions: true
-
 gate:
-  primary: {metric: content_accuracy, templates: eval_rotation, alpha_a: 0.05, alpha_b: 0.05}  # one-sided each
-  guardrails:                      # vs BASE, non-inferiority; margins pre-registered
-    - {name: transfer, margin: null, alpha: 0.05}
-    - {name: instruction_following, margin: null, alpha: 0.05}
-    - {name: multilingual_math, margin: null, alpha: 0.05}
-    - {name: format_compliance, margin: null, alpha: 0.05}   # computed from gate completions: no extra generation
-  target_joint_power: 0.80         # at the pre-registered floor; verified by E3
-  floor: null                      # pre-registered practical gain (accuracy points)
-
+  primary:
+    metric: content_accuracy
+    templates: eval_rotation
+    alpha_a: 0.05
+    alpha_b: 0.05
+  guardrails:
+  - name: transfer
+    margin: null
+    alpha: 0.05
+  - name: instruction_following
+    margin: null
+    alpha: 0.05
+  - name: multilingual_math
+    margin: null
+    alpha: 0.05
+  - name: format_compliance
+    margin: null
+    alpha: 0.05
+  target_joint_power: 0.8
+  floor: null
 controller:
-  gate_every_steps: null           # G: from E1 learning curve (multiple of N)
-  step_budget: null                # max steps since promotion before HALT: from E1 plateau
+  gate_every_steps: null
+  step_budget: null
   max_consecutive_restores: 3
   milestone_every_promotions: 2
-  read_budgets: {gate_a: null, gate_b: null, hidden_audit: null, hidden_sealed: 1, transfer_sealed: 1}
-  human_change_budget: null        # per pre-registration
-  expected_false_halts_per_run: 1.0   # pre-registered target; alpha allocated to tripwires; E5 checks
-
+  read_budgets:
+    gate_a: null
+    gate_b: null
+    hidden_audit: null
+    hidden_sealed: 1
+    transfer_sealed: 1
+  human_change_budget: null
+  expected_false_halts_per_run: 1.0
 tripwires:
-  checker_disagreement: {alpha: null}           # train verifier accepts, exact scorer rejects, same outputs
-  capability_trend: {alpha: null}               # guardrail + capability monitors only; Bonferroni
-  drift_limits: {kl_to_base_max: null, entropy_min: null, len_p95_max_frac_of_cap: null}   # absolute, from E1
-  sync_failure: {gap_multiple_of_running_median: 100}   # orders of magnitude only
+  checker_disagreement:
+    alpha: null
+  capability_trend:
+    alpha: null
+  drift_limits:
+    kl_to_base_max: null
+    entropy_min: null
+    len_p95_max_frac_of_cap: null
+  sync_failure:
+    gap_multiple_of_running_median: 100
   pool_inband_min_frac: null
-  audit_contradiction: {rule: "upper bound of (champion - base) on hidden_audit < 0"}
-
-storage: {root: runs/, keep_rejected_weights: 5}
+  audit_contradiction:
+    rule: upper bound of (champion - base) on hidden_audit < 0
+persistence:
+  metadata_backend: sqlite
+  artifact_backend: local
+  job_executor: local-subprocess
+  keep_rejected_weights: 5

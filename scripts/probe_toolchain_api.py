@@ -1,4 +1,5 @@
 """Inspect the pinned TRL/PEFT API without loading a model or starting vLLM."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +15,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
+
+from autopost.config import load_config
 
 SCHEMA = "autopost.toolchain-probe/2"
 REQUIRED_GRPO_FIELDS = {
@@ -65,7 +68,9 @@ def _version(distribution: str) -> str | None:
 def load_locked_versions(path: Path) -> dict[str, str]:
     """Load a fully pinned, marker-free requirements lock."""
     locked: dict[str, str] = {}
-    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for line_number, raw_line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
@@ -81,7 +86,34 @@ def load_locked_versions(path: Path) -> dict[str, str]:
 
 
 def _load_train_config(path: Path) -> tuple[str, dict]:
-    document = yaml.safe_load(path.read_text(encoding="utf-8"))
+    document = load_config(path)
+    if "experiment" in document:
+        # Translate project-owned settings to the pinned library's API only in
+        # this inspection adapter. Contracts contain no TRL runtime objects.
+        execution = document["execution"]
+        backend, separator, version = execution["training_backend"].partition("@")
+        if backend != "trl" or not separator:
+            raise ValueError("toolchain probe requires a pinned TRL execution profile")
+        configured = dict(document["experiment"]["train"]["trl"])
+        configured.update(
+            {
+                key: execution["backend_options"][key]
+                for key in ("use_vllm", "vllm_mode", "vllm_gpu_memory_utilization")
+            }
+        )
+        configured.update(
+            {
+                f"vllm_importance_sampling_{key}": execution["importance_sampling"][key]
+                for key in ("correction", "mode", "clip_min", "clip_max")
+            }
+        )
+        configured.update(
+            {
+                key: execution["rollout_sampling"][key]
+                for key in ("temperature", "top_p")
+            }
+        )
+        return version, configured
     if not isinstance(document, dict) or not isinstance(document.get("train"), dict):
         raise TypeError(f"missing train mapping in {path}")
     train = document["train"]
@@ -104,7 +136,12 @@ def _cuda_summary() -> dict:
             "devices": names,
         }
     except Exception as exc:  # noqa: BLE001  # optional runtime must become a report
-        return {"torch": _version("torch"), "available": False, "device_count": 0, "error": str(exc)}
+        return {
+            "torch": _version("torch"),
+            "available": False,
+            "device_count": 0,
+            "error": str(exc),
+        }
 
 
 def runtime_statuses(cuda_available: bool) -> tuple[str, str, list[str]]:
@@ -113,7 +150,9 @@ def runtime_statuses(cuda_available: bool) -> tuple[str, str, list[str]]:
         return (
             "REQUIRED_NOT_RUN",
             "NOT_TESTED",
-            ["CUDA GPU detected: run the one-to-two-step dev smoke before Sprint 0 can close"],
+            [
+                "CUDA GPU detected: run the one-to-two-step dev smoke before Sprint 0 can close"
+            ],
         )
     return "PENDING_HARDWARE", "NOT_TESTED", []
 
@@ -148,7 +187,9 @@ def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
         errors.append(str(exc))
 
     if versions["trl"] != expected_trl:
-        errors.append(f"TRL version mismatch: configured {expected_trl}, installed {versions['trl'] or 'missing'}")
+        errors.append(
+            f"TRL version mismatch: configured {expected_trl}, installed {versions['trl'] or 'missing'}"
+        )
 
     expected_values = {
         "loss_type": "dapo",
@@ -159,18 +200,27 @@ def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
     }
     for name, expected in expected_values.items():
         if configured.get(name) != expected:
-            errors.append(f"train.trl.{name} must be {expected!r}; found {configured.get(name)!r}")
+            errors.append(
+                f"train.trl.{name} must be {expected!r}; found {configured.get(name)!r}"
+            )
     cap = configured.get("vllm_importance_sampling_clip_max")
     if not isinstance(cap, (int, float)) or isinstance(cap, bool) or cap <= 0:
-        errors.append("train.trl.vllm_importance_sampling_clip_max must be an explicit positive number")
-    checks["configured_controls"] = not any(error.startswith("train.trl.") for error in errors)
+        errors.append(
+            "train.trl.vllm_importance_sampling_clip_max must be an explicit positive number"
+        )
+    checks["configured_controls"] = not any(
+        error.startswith("train.trl.") for error in errors
+    )
 
     try:
         from trl import GRPOConfig, GRPOTrainer
 
         fields = {field.name for field in dataclasses.fields(GRPOConfig)}
         missing_fields = missing_names(fields, REQUIRED_GRPO_FIELDS)
-        checks["grpo_config_fields"] = {"ok": not missing_fields, "missing": missing_fields}
+        checks["grpo_config_fields"] = {
+            "ok": not missing_fields,
+            "missing": missing_fields,
+        }
         if missing_fields:
             errors.append(f"GRPOConfig missing fields: {', '.join(missing_fields)}")
 
@@ -179,7 +229,9 @@ def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
             for key, value in configured.items()
             if key in fields and value is not None
         }
-        constructor_values.update({"use_vllm": False, "bf16": False, "fp16": False, "report_to": "none"})
+        constructor_values.update(
+            {"use_vllm": False, "bf16": False, "fp16": False, "report_to": "none"}
+        )
         with tempfile.TemporaryDirectory(prefix="autopost-probe-") as output_dir:
             instance = GRPOConfig(output_dir=output_dir, **constructor_values)
         constructor_ok = (
@@ -194,15 +246,25 @@ def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
 
         trainer_parameters = set(inspect.signature(GRPOTrainer.__init__).parameters)
         missing_trainer = missing_names(trainer_parameters, REQUIRED_TRAINER_PARAMETERS)
-        checks["trainer_hooks"] = {"ok": not missing_trainer, "missing": missing_trainer}
+        checks["trainer_hooks"] = {
+            "ok": not missing_trainer,
+            "missing": missing_trainer,
+        }
         if missing_trainer:
             errors.append(f"GRPOTrainer missing hooks: {', '.join(missing_trainer)}")
 
         trainer_source = inspect.getsource(GRPOTrainer)
-        missing_metrics = sorted(token for token in REQUIRED_METRIC_TOKENS if token not in trainer_source)
-        checks["expected_metrics"] = {"ok": not missing_metrics, "missing_tokens": missing_metrics}
+        missing_metrics = sorted(
+            token for token in REQUIRED_METRIC_TOKENS if token not in trainer_source
+        )
+        checks["expected_metrics"] = {
+            "ok": not missing_metrics,
+            "missing_tokens": missing_metrics,
+        }
         if missing_metrics:
-            errors.append(f"GRPOTrainer missing metric tokens: {', '.join(missing_metrics)}")
+            errors.append(
+                f"GRPOTrainer missing metric tokens: {', '.join(missing_metrics)}"
+            )
     except Exception as exc:  # noqa: BLE001  # probe failures must not hide the report
         checks["trl_import_and_construction"] = False
         errors.append(f"TRL API inspection failed: {type(exc).__name__}: {exc}")
@@ -221,7 +283,9 @@ def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
         errors.append(f"PEFT API inspection failed: {type(exc).__name__}: {exc}")
 
     api_surface_status = "PASS" if not errors else "BLOCKED"
-    gpu_runtime_status, vllm_runtime_status, blocking_reasons = runtime_statuses(bool(cuda.get("available")))
+    gpu_runtime_status, vllm_runtime_status, blocking_reasons = runtime_statuses(
+        bool(cuda.get("available"))
+    )
 
     result = {
         "schema": SCHEMA,
@@ -245,12 +309,18 @@ def run_probe(config_path: Path, lock_path: Path) -> tuple[dict, int]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/base.yaml"))
-    parser.add_argument("--lock", type=Path, default=Path("requirements/toolchain-probe.lock"))
-    parser.add_argument("--output", type=Path, default=Path("docs/toolchain_probe.json"))
+    parser.add_argument(
+        "--lock", type=Path, default=Path("requirements/toolchain-probe.lock")
+    )
+    parser.add_argument(
+        "--output", type=Path, default=Path("docs/toolchain_probe.json")
+    )
     args = parser.parse_args(argv)
     result, return_code = run_probe(args.config, args.lock)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(json.dumps(result, indent=2, sort_keys=True))
     return return_code
 

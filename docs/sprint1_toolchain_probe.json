@@ -1,0 +1,50 @@
+{
+  "api_surface_status": "PASS",
+  "blocking_reasons": [],
+  "checked_at": "2026-11-06T08:41:53.115824+00:00",
+  "checks": {
+    "configured_controls": true,
+    "dependency_lock": {
+      "mismatches": {},
+      "ok": true
+    },
+    "expected_metrics": {
+      "missing_tokens": [],
+      "ok": true
+    },
+    "grpo_config_construction": true,
+    "grpo_config_fields": {
+      "missing": [],
+      "ok": true
+    },
+    "peft_lora_hooks": {
+      "missing": [],
+      "ok": true
+    },
+    "trainer_hooks": {
+      "missing": [],
+      "ok": true
+    }
+  },
+  "config": "configs\\base.yaml",
+  "cuda": {
+    "available": false,
+    "device_count": 0,
+    "devices": [],
+    "torch": "2.6.0"
+  },
+  "dependency_lock": "requirements\\toolchain-probe.lock",
+  "errors": [],
+  "gpu_runtime_status": "PENDING_HARDWARE",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.13.7",
+  "schema": "autopost.toolchain-probe/2",
+  "versions": {
+    "peft": "0.21.2",
+    "torch": "2.6.0",
+    "transformers": "5.20.1",
+    "trl": "1.17.1",
+    "vllm": null
+  },
+  "vllm_runtime_status": "NOT_TESTED"
+}
