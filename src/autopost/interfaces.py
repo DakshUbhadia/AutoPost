@@ -31,24 +31,15 @@ try:                                    # repository layout
     from autopost.contracts import (ModelSpec, ExecutionProfile, SamplingConfig, StateManifest, StateRef,
                                     JobExecutor, MetadataStore, ArtifactStore,
                                     RolloutProvider, EvalGenerationProvider, content_hash)
+    from autopost.contracts.tasks import Task, AnswerType, Split, MEASURABLE_TYPES, MEASUREMENT_SPLITS
     from autopost.eval.stats import BootResult
 except ImportError:                     # flat companion-file layout
     from contracts import (ModelSpec, ExecutionProfile, SamplingConfig, StateManifest, StateRef,
                            JobExecutor, MetadataStore, ArtifactStore,
                            RolloutProvider, EvalGenerationProvider, content_hash)
+    from contracts.tasks import Task, AnswerType, Split, MEASURABLE_TYPES, MEASUREMENT_SPLITS
     from stats import BootResult
 
-AnswerType = Literal["int", "rational", "decimal", "expr", "interval", "tuple"]
-MEASURABLE_TYPES: frozenset[str] = frozenset({"int", "rational", "decimal"})  # exact numbers only
-Split = Literal[
-    "train", "dev", "pilot", "screen", "gate_a", "gate_a_reservoir", "gate_b",
-    "gate_b_reservoir", "transfer_guard", "transfer_sealed",
-    "hidden_dev", "hidden_audit", "hidden_sealed",
-]
-MEASUREMENT_SPLITS: frozenset[str] = frozenset({
-    "pilot", "screen", "gate_a", "gate_a_reservoir", "gate_b", "gate_b_reservoir",
-    "transfer_guard", "transfer_sealed", "hidden_dev", "hidden_audit", "hidden_sealed",
-})
 VerdictStatus = Literal[
     "ok", "wrong", "no_answer", "multiple_answers", "truncated", "parse_error", "timeout"
 ]
@@ -69,24 +60,6 @@ class RawTask:
     problem: str
     answer: str
     meta: Mapping[str, str] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class Task:
-    task_id: str
-    cluster_id: str          # dedup cluster; for perturbation sets, the program id
-    source_id: str
-    skill: str
-    problem: str
-    answer: str
-    answer_type: AnswerType
-    low_entropy: bool
-    split: Split
-
-    @property
-    def measurable(self) -> bool:
-        """May appear in a measurement split (exact numeric answer)."""
-        return self.answer_type in MEASURABLE_TYPES
 
 
 @dataclass(frozen=True)
@@ -292,9 +265,11 @@ class OfflineTrainer(ABC):
               model: ModelSpec, execution: ExecutionProfile, steps: int) -> TrainResult: ...
 
 
-def assert_not_measurement(tasks: Sequence[Task]) -> None:
+def assert_not_measurement(tasks: Sequence[Task], *, measurement_clusters: frozenset[str] = frozenset(),
+                           measurement_task_ids: frozenset[str] = frozenset()) -> None:
     """Invariant: no trainer ever receives an item from a measurement split."""
-    bad = [t.task_id for t in tasks if t.split in MEASUREMENT_SPLITS]
+    bad = [t.task_id for t in tasks if t.split not in {"train", "dev"} or t.source_role != "train" or
+           t.cluster_id in measurement_clusters or t.task_id in measurement_task_ids]
     if bad:
         raise RuntimeError(f"measurement items passed to a trainer: {bad[:5]}")
 

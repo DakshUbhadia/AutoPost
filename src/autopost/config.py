@@ -103,6 +103,9 @@ def stack_hash(cfg: dict, *, lock_sha256: str) -> str:
                     "ArtifactManifest",
                     "EvalEvidence",
                     "refs",
+                    "DatasetManifest",
+                    "Task",
+                    "HiddenProgram",
                 )
             },
         }

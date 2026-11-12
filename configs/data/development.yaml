@@ -1,0 +1,20 @@
+# CPU engineering quotas; no target-model calibration or research partitions.
+schema_version: 1
+mode: development
+seed: 0
+minhash_ngram: 5
+minhash_permutations: 64
+minhash_threshold: 0.8
+embedding_cos: 0.92
+split_clusters:
+  train: 16
+  dev: 2
+  pilot: 3
+  screen: 2
+  gate_a: 2
+  gate_a_reservoir: 2
+  gate_b: 2
+  gate_b_reservoir: 2
+  transfer_guard: 2
+hidden_instances_per_program: 8
+hidden_property_trials: 256

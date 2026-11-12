@@ -10,7 +10,7 @@ from .manifests import StateManifest
 from .models import PositiveInt
 from .refs import ArtifactId, JobId, RunId, StateRef
 
-METADATA_SCHEMA_VERSION = 2
+METADATA_SCHEMA_VERSION = 3
 
 
 class MetadataRecord(DurableModel):

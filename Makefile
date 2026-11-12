@@ -38,6 +38,12 @@ prereg-verify:
 toolchain-probe:
 	python scripts/probe_toolchain_api.py
 
-spike data hidden phase1 gonogo run report:
+data:
+	python -m autopost.cli data build-dev
+
+hidden:
+	python scripts/build_hidden_perturbations.py
+
+spike phase1 gonogo run report:
 	@echo not implemented yet (see roadmap)
 	@exit 1

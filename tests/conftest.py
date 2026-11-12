@@ -84,3 +84,29 @@ def storage(tmp_path):
         executor=FixtureExecutor(metadata, artifacts),
         run_id="fixture-run",
     )
+
+
+@pytest.fixture(scope="session")
+def development_result():
+    from autopost.data.builder import build
+    from autopost.data.fixtures import development_inputs
+
+    sources, embeddings, config, programs = development_inputs()
+    return (
+        sources,
+        embeddings,
+        config,
+        programs,
+        build(sources, embeddings, config, programs=programs),
+    )
+
+
+@pytest.fixture
+def catalog(storage, development_result):
+    from autopost.store.datasets import DatasetRepository
+
+    repo = DatasetRepository(storage.database, storage.artifacts)
+    refs = repo.publish(development_result[-1])
+    return SimpleNamespace(
+        repo=repo, refs=refs, storage=storage, result=development_result[-1]
+    )

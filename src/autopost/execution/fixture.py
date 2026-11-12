@@ -114,7 +114,7 @@ def initialize_fixture_run(
         verifier_version="fixture-v1",
         **{name: manifest.artifact for name in COMPONENTS},
     )
-    metadata.register_run(run_id)
+    metadata.register_run(run_id, fixture_only=True)
     metadata.register_initial_state(run_id, root)
     if metadata.get_pointer(run_id, "cursor") is None:
         metadata.initialize_pointer(run_id, "cursor", root.state)

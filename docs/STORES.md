@@ -50,6 +50,7 @@ Pointers use compare-and-set expectations. Budget item identities are unique wit
 | Unversioned `0` | Recognized legacy database; table columns and foreign keys must match the known baseline |
 | Metadata `1` | Legacy baseline registered in the migration ledger |
 | Metadata `2` | Additive Revision 3 runs, jobs, attempts, artifacts, states, records, pointers, budgets, acceptance and audit tables |
+| Metadata `3` | Versioned dataset/task catalog, protected measurement provenance, hidden reviews and explicit fixture-run provenance |
 | Durable wire `1` | Ref/job/result/manifest/evidence/attempt/audit schemas; separate from metadata version |
 | Artifact layout `1` | Private staging and immutable object directories |
 
@@ -80,4 +81,6 @@ Each scenario uses `runs/sprint2-fixture/<scenario>/` by default and writes a JS
 
 `FixtureExecutor` also exposes `crash_before_finalize` and `crash_after_finalize` interruptions for tests. The acceptance suite turns these into real abrupt child-process exits and independently exits during the metadata transaction. Recovery reopens both stores, retries the logical job and proves that its effects commit only once. Concurrent delivery tests exercise duplicate acceptance and competing pointer updates.
 
-Every fixture payload/report is marked `fixture_only`. No fixture completion, metric or checkpoint supports a scientific model-improvement claim. Real executors/providers, data-pipeline migrations, training, controller policy and operational reporting remain later-sprint work.
+Every fixture payload/report is marked `fixture_only`. No fixture completion, metric or checkpoint supports a scientific model-improvement claim. Real model executors/providers, training, controller policy and operational reporting remain later-sprint work.
+
+Sprint 3 adds the [data catalog](DATA.md). Training jobs now require a registered eligible training input; hidden evaluation jobs require reviewed generated instances. Explicitly marked fixture runs retain support for the opaque synthetic input refs used by the Sprint 2 failure suite, while registered measurement refs are always rejected for training. Run provenance cannot be changed after registration. Existing unmarked historical runs are preserved; use a fresh `--root` for current fixture demonstrations rather than relabeling their history.

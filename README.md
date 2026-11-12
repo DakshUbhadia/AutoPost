@@ -35,6 +35,8 @@ The checked-in probe lock reproduces the validated CPython 3.13.7 Windows CPU in
 - [Sprint 1 acceptance evidence](docs/SPRINT_1_AUDIT.md)
 - [Durable stores and fixture execution](docs/STORES.md)
 - [Sprint 2 acceptance evidence](docs/SPRINT_2_AUDIT.md)
+- [Data pipeline and hidden-development workflow](docs/DATA.md)
+- [Sprint 3 acceptance evidence](docs/SPRINT_3_AUDIT.md)
 
 Inspect the composed development configuration and identities:
 
@@ -56,3 +58,12 @@ python -m autopost.cli db status --path runs/sprint2-fixture/success/metadata.sq
 ```
 
 Fixture reports and artifacts live under `runs/sprint2-fixture/<scenario>/`. Repeating a successful fixture returns a duplicate and preserves its original state and budget charge. Use `python -m autopost.cli db migrate --path <database>` to apply checksum-verified additive metadata migrations; existing scientific records remain unchanged.
+
+Build the disposable CPU data fixtures and inspect their contamination and review reports:
+
+```text
+python -m autopost.cli data build-dev
+python scripts/build_hidden_perturbations.py
+```
+
+The first command publishes separate immutable training and measurement datasets under `runs/development-data/`. Hidden-program samples remain quarantined until explicit human review. No research `hidden_audit`, `hidden_sealed` or sealed transfer dataset is created. The [data guide](docs/DATA.md) covers pinned local source snapshots, cached embeddings and review commands.

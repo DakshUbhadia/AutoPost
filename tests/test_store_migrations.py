@@ -56,9 +56,9 @@ def test_legacy_adoption_is_additive_and_never_rewrites_historical_records(tmp_p
     legacy_database(path)
     before = snapshot(path)
     assert schema_version(path) == 0
-    assert migrate_db(path) == CURRENT_SCHEMA_VERSION == 2
+    assert migrate_db(path) == CURRENT_SCHEMA_VERSION == 3
     assert snapshot(path) == before
-    assert migrate_db(path) == 2
+    assert migrate_db(path) == 3
     assert snapshot(path) == before
     with closing(sqlite3.connect(path)) as db:
         assert [
@@ -66,7 +66,7 @@ def test_legacy_adoption_is_additive_and_never_rewrites_historical_records(tmp_p
             for row in db.execute(
                 "SELECT version FROM ap_schema_migrations ORDER BY version"
             )
-        ] == [1, 2]
+        ] == [1, 2, 3]
 
 
 def test_failure_in_forward_migration_rolls_back_ddl_and_version(tmp_path, monkeypatch):
@@ -139,7 +139,7 @@ def test_migration_ledger_is_checksum_verified(tmp_path):
 def test_fresh_init_records_current_schema_and_keeps_refusal_of_existing_db(tmp_path):
     path = tmp_path / "metadata.sqlite"
     init_db(path)
-    assert schema_version(path) == 2
+    assert schema_version(path) == 3
     with pytest.raises(RuntimeError, match="already contains tables"):
         init_db(path)
 

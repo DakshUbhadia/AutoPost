@@ -107,13 +107,23 @@ class SQLiteMetadataStore:
             (run_id, job_id, kind, canonical_bytes(payload)),
         )
 
-    def register_run(self, run_id: RunId) -> None:
+    def register_run(self, run_id: RunId, *, fixture_only: bool = False) -> None:
         run_id = self._run_id(run_id)
+        if type(fixture_only) is not bool:
+            raise StoreError("fixture_only must be explicit boolean provenance")
         with self._transaction() as db:
+            existing = db.execute(
+                "SELECT fixture_only FROM ap_runs WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if existing is not None and bool(existing[0]) != fixture_only:
+                raise ConflictError("run fixture provenance cannot change")
             if db.execute(
-                "INSERT OR IGNORE INTO ap_runs(run_id) VALUES (?)", (run_id,)
+                "INSERT OR IGNORE INTO ap_runs(run_id,fixture_only) VALUES (?,?)",
+                (run_id, int(fixture_only)),
             ).rowcount:
-                self._event(db, run_id, None, "run_registered", {})
+                self._event(
+                    db, run_id, None, "run_registered", {"fixture_only": fixture_only}
+                )
 
     @staticmethod
     def _state_row(db, run_id, ref):
@@ -259,6 +269,7 @@ class SQLiteMetadataStore:
         handle = JobHandle(job_id=spec.job_id, attempt=spec.attempt)
         with self._transaction() as db:
             self._require_run(db, spec.run_id)
+            self._validate_data_input(db, spec)
             row = db.execute(
                 "SELECT semantic_digest FROM ap_jobs WHERE job_id=?", (spec.job_id,)
             ).fetchone()
@@ -599,9 +610,41 @@ class SQLiteMetadataStore:
                 raise _Rejected("conflict")
         return manifests
 
+    def _validate_data_input(self, db, spec):
+        from autopost.contracts.refs import ArtifactRef
+
+        from .datasets import evaluation_rows, training_rows
+
+        fixture = bool(
+            db.execute(
+                "SELECT fixture_only FROM ap_runs WHERE run_id=?", (spec.run_id,)
+            ).fetchone()[0]
+        )
+        ref = spec.training_slice if isinstance(spec, TrainingJobSpec) else spec.dataset
+        if isinstance(spec, TrainingJobSpec):
+            training_rows(db, ref, fixture_only=fixture)
+        else:
+            evaluation_rows(db, ref, spec.split, fixture_only=fixture)
+        row = db.execute(
+            "SELECT artifact_ref,manifest FROM ap_datasets WHERE dataset_id=?",
+            (ref.dataset_id,),
+        ).fetchone()
+        if (
+            row
+            and self.artifacts.read(ArtifactRef.from_bytes(row[0]), "dataset-manifest")
+            != row[1]
+        ):
+            raise StoreError(
+                "input dataset artifact differs from registered provenance"
+            )
+
     def _validate_effects(self, db, spec, result, effects):
         if effects.run_id != spec.run_id:
             raise _Rejected("conflict")
+        try:
+            self._validate_data_input(db, spec)
+        except StoreError as exc:
+            raise _Rejected("conflict") from exc
         if isinstance(spec, TrainingJobSpec):
             parent = self._state_row(db, spec.run_id, spec.start)
             if effects.expected_parent != spec.start or len(effects.states) != 1:

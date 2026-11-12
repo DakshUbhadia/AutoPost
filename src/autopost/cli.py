@@ -116,6 +116,21 @@ def main(argv: list[str] | None = None) -> int:
         ),
         default="success",
     )
+    data = commands.add_parser("data").add_subparsers(dest="action", required=True)
+    data_build = data.add_parser("build-dev")
+    data_build.add_argument("--root", default="runs/development-data")
+    data_build.add_argument("--seed", type=int, default=0)
+    data_build.add_argument("--source", action="append", default=[])
+    data_build.add_argument("--embeddings")
+    data_build.add_argument("--config")
+    data_build.add_argument("--programs")
+    review = data.add_parser("review-hidden")
+    review.add_argument("--root", default="runs/development-data")
+    review.add_argument("--packet", required=True)
+    review.add_argument("--program", required=True)
+    review.add_argument("--reviewer", required=True)
+    review.add_argument("--decision", choices=("approved", "rejected"), required=True)
+    review.add_argument("--notes", required=True)
     prereg = commands.add_parser("prereg").add_subparsers(dest="action", required=True)
     draft = prereg.add_parser("init")
     draft.add_argument("--version", default="stageB-p1-v1")
@@ -182,6 +197,28 @@ def main(argv: list[str] | None = None) -> int:
                     sort_keys=True,
                 )
             )
+        elif args.command == "data":
+            from autopost.data.commands import build_command, review_command
+
+            if args.action == "build-dev":
+                result = build_command(
+                    Path(args.root),
+                    seed=args.seed,
+                    source_paths=args.source,
+                    embedding_path=args.embeddings,
+                    config_path=args.config,
+                    programs_path=args.programs,
+                )
+            else:
+                result = review_command(
+                    Path(args.root),
+                    Path(args.packet),
+                    args.program,
+                    args.reviewer,
+                    args.decision,
+                    args.notes,
+                )
+            print(json.dumps(result, indent=2, sort_keys=True))
         elif args.command == "prereg" and args.action == "init":
             if args.phase != "phase1":
                 parser.error("Phase II pre-registration is built in a later step")

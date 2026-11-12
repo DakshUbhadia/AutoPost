@@ -13,7 +13,11 @@ from autopost.contracts.persistence import METADATA_SCHEMA_VERSION
 from .errors import SchemaVersionError
 
 CURRENT_SCHEMA_VERSION = METADATA_SCHEMA_VERSION
-MIGRATIONS = {1: "schema.sql", 2: "migrations/002_durable_stores.sql"}
+MIGRATIONS = {
+    1: "schema.sql",
+    2: "migrations/002_durable_stores.sql",
+    3: "migrations/003_datasets.sql",
+}
 
 
 def schema_sql() -> str:
