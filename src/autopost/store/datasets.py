@@ -18,6 +18,7 @@ from autopost.contracts import (
 )
 from autopost.contracts.datasets import BuildConfig, DatasetManifest, SourceSpec
 from autopost.contracts.serialization import canonical_bytes, content_hash
+from autopost.contracts.signals import LabelReview
 from autopost.contracts.tasks import MEASUREMENT_SPLITS, SEALED_SPLITS, Task
 from autopost.data.builder import BuildResult, task_bytes
 from autopost.data.dedup import EmbeddingTable, cluster
@@ -53,7 +54,7 @@ def task_keys(task: Task, manifest: DatasetManifest):
 
 
 def training_rows(
-    db, ref: DatasetRef, *, fixture_only: bool = False
+    db, ref: DatasetRef, *, fixture_only: bool = False, include_quarantined: bool = False
 ) -> tuple[Task, ...]:
     ref.to_bytes()
     dataset = db.execute(
@@ -92,7 +93,18 @@ def training_rows(
         for task in tasks
     ):
         raise StoreError("invalid training dataset membership")
-    return tasks
+    if include_quarantined:
+        return tasks  # Review tooling may inspect excluded immutable labels.
+    allowed = []
+    for task in tasks:
+        reviews = [LabelReview.from_bytes(row[0]) for row in db.execute(
+            "SELECT record FROM ap_label_reviews WHERE task_id=? AND task_digest=? ORDER BY sequence",
+            (task.task_id, hashlib.sha256(task.to_bytes()).hexdigest()))]
+        if reviews and (reviews[-1].decision != "confirmed_good" or any(
+                r.decision in {"corrected", "irreparable"} for r in reviews)):
+            continue
+        allowed.append(task)
+    return tuple(allowed)
 
 
 def evaluation_rows(

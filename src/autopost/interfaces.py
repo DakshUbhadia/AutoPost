@@ -23,6 +23,7 @@ Revision 2 changes (architecture doc, Appendix D):
 from __future__ import annotations
 
 import enum
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Iterator, Literal, Mapping, Protocol, Sequence
@@ -81,6 +82,16 @@ class Completion:
     text: str
     n_tokens: int
     truncated: bool
+
+    def __post_init__(self):
+        if any(type(getattr(self, key)) is not str or not getattr(self, key)
+               for key in ("completion_id", "task_id", "state_id", "template_id")):
+            raise ValueError("completion identities must be nonempty strings")
+        if (type(self.text) is not str or type(self.seed) is not int
+                or type(self.sample_idx) is not int or self.sample_idx < 0
+                or type(self.n_tokens) is not int or self.n_tokens < 0
+                or type(self.truncated) is not bool):
+            raise ValueError("invalid completion text, counts or truncation flag")
 
 
 @dataclass(frozen=True)
@@ -184,6 +195,14 @@ class BinaryReward(RewardFunction):
 
     def __init__(self, max_new_tokens: int, overlong_window: int = 0,
                  overlong_max_penalty: float = 0.0):
+        if type(max_new_tokens) is not int or max_new_tokens <= 0:
+            raise ValueError("max_new_tokens must be positive")
+        if type(overlong_window) is not int or overlong_window < 0:
+            raise ValueError("overlong_window must be nonnegative")
+        if not math.isfinite(overlong_max_penalty) or not 0 <= overlong_max_penalty <= 1:
+            raise ValueError("overlong_max_penalty must be in [0,1]")
+        if overlong_max_penalty and not overlong_window:
+            raise ValueError("overlong penalty requires an explicit window")
         if overlong_window and not 0 < overlong_window < max_new_tokens:
             raise ValueError("overlong_window must be in (0, max_new_tokens)")
         self.max_new_tokens = max_new_tokens
@@ -191,6 +210,12 @@ class BinaryReward(RewardFunction):
         self.max_penalty = overlong_max_penalty
 
     def __call__(self, task: Task, completion: Completion, verdict: Verdict) -> RewardResult:
+        if completion.task_id != task.task_id or completion.n_tokens < 0:
+            raise ValueError("reward requires a matching completion with nonnegative token count")
+        if verdict.checker_id.startswith("exact_numeric"):
+            raise ValueError("measurement scorer cannot produce training rewards")
+        if verdict.correct != (verdict.status == "ok"):
+            raise ValueError("inconsistent verifier verdict")
         correct = 1.0 if (verdict.correct and not completion.truncated) else 0.0
         penalty = 0.0
         if self.window and self.max_penalty:
@@ -205,6 +230,8 @@ class BinaryReward(RewardFunction):
 # --------------------------------------------------------------------------
 def signal_probability(p: float, group_size: int) -> float:
     """P(a group of size G has non-zero reward variance) at pass rate p."""
+    if not math.isfinite(p) or not 0 <= p <= 1 or type(group_size) is not int or group_size < 2:
+        raise ValueError("pass rate must be in [0,1] and group size at least two")
     return 1.0 - p ** group_size - (1.0 - p) ** group_size
 
 
@@ -224,6 +251,8 @@ def band_for(group_size: int, min_signal_prob: float) -> tuple[float, float]:
 
 
 def posterior_pass_rate(n_correct: int, n: int) -> float:
+    if type(n_correct) is not int or type(n) is not int or not 0 <= n_correct <= n:
+        raise ValueError("pass-rate counts must satisfy 0 <= n_correct <= n")
     return (n_correct + 1) / (n + 2)
 
 

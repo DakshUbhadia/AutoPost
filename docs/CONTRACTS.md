@@ -1,5 +1,8 @@
 # Revision 3 contracts and configuration
 
+Sprint 4 adds version-1 training-signal contracts in `contracts/signals.py` and
+metadata migration 4. See [verification and curriculum](VERIFICATION.md).
+
 Sprint 1 implements the boundaries defined in architecture §§8, 11.1 and 27. Durable values live in `src/autopost/contracts/`. Sprint 2 supplies the [local stores and CPU fixture executor](STORES.md); real model execution and generation providers remain later-sprint work.
 
 ## Wire rules

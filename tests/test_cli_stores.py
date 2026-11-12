@@ -35,6 +35,6 @@ def test_fixture_cli_demonstrates_expected_semantics(
 def test_db_cli_reports_and_migrates_schema(tmp_path, capsys):
     path = str(tmp_path / "metadata.sqlite")
     assert main(["db", "migrate", "--path", path]) == 0
-    assert capsys.readouterr().out.strip() == "metadata schema 3"
+    assert capsys.readouterr().out.strip() == "metadata schema 4"
     assert main(["db", "status", "--path", path]) == 0
-    assert capsys.readouterr().out.strip() == "metadata schema 3"
+    assert capsys.readouterr().out.strip() == "metadata schema 4"

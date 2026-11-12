@@ -1,5 +1,8 @@
 # Durable local stores and fixture execution
 
+The current metadata schema is version 4. Sprint 4 adds append-only training
+evidence, review and curriculum reservations; see [training signals](VERIFICATION.md).
+
 Sprint 2 implements architecture §8.2 and the roadmap's persistence exit gate. All implementation and acceptance tests are CPU-only. These components do not load a model or import training frameworks.
 
 ## Lifecycle

@@ -37,6 +37,8 @@ The checked-in probe lock reproduces the validated CPython 3.13.7 Windows CPU in
 - [Sprint 2 acceptance evidence](docs/SPRINT_2_AUDIT.md)
 - [Data pipeline and hidden-development workflow](docs/DATA.md)
 - [Sprint 3 acceptance evidence](docs/SPRINT_3_AUDIT.md)
+- [Training verification, curriculum, and label reviews](docs/VERIFICATION.md)
+- [Sprint 4 acceptance evidence](docs/SPRINT_4_AUDIT.md)
 
 Inspect the composed development configuration and identities:
 
@@ -67,3 +69,8 @@ python scripts/build_hidden_perturbations.py
 ```
 
 The first command publishes separate immutable training and measurement datasets under `runs/development-data/`. Hidden-program samples remain quarantined until explicit human review. No research `hidden_audit`, `hidden_sealed` or sealed transfer dataset is created. The [data guide](docs/DATA.md) covers pinned local source snapshots, cached embeddings and review commands.
+
+Sprint 4 adds a pinned CPU verifier dependency to `make install-cpu`.
+`python -m autopost.cli training --help` exposes rollout verification, curriculum
+reservations, promotion refresh and independent label review. The
+[training-signal guide](docs/VERIFICATION.md) covers inputs and evidence.

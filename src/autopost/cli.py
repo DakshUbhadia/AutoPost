@@ -131,6 +131,30 @@ def main(argv: list[str] | None = None) -> int:
     review.add_argument("--reviewer", required=True)
     review.add_argument("--decision", choices=("approved", "rejected"), required=True)
     review.add_argument("--notes", required=True)
+    training = commands.add_parser("training").add_subparsers(dest="action", required=True)
+    for action in ("verify", "sample", "refresh", "review"):
+        command = training.add_parser(action)
+        command.add_argument("--root", default="runs/development-data")
+        command.add_argument("--dataset-ref", required=True, help="JSON DatasetRef file")
+        command.add_argument("--base-yaml", default="configs/base.yaml")
+        command.add_argument("--fixture-only", action="store_true")
+        if action == "verify":
+            command.add_argument("--task-id", required=True)
+            command.add_argument("--completions", required=True, help="JSON array of Completion records")
+            command.add_argument("--group-id", required=True)
+            command.add_argument("--workers", type=int, default=2)
+            command.add_argument("--timeout", type=float, default=10.0)
+            command.add_argument("--max-new-tokens", type=int, required=True)
+        elif action == "sample":
+            command.add_argument("--slice-id", required=True)
+            command.add_argument("--n-prompts", type=int, required=True)
+            command.add_argument("--seed", type=int, required=True)
+            command.add_argument("--exclude-checker", action="append", default=[])
+        elif action == "refresh":
+            command.add_argument("--promotion-id", required=True)
+            command.add_argument("--exclude-checker", action="append", default=[])
+        else:
+            command.add_argument("--review", required=True, help="JSON LabelReview with finalized evidence ref")
     prereg = commands.add_parser("prereg").add_subparsers(dest="action", required=True)
     draft = prereg.add_parser("init")
     draft.add_argument("--version", default="stageB-p1-v1")
@@ -197,6 +221,10 @@ def main(argv: list[str] | None = None) -> int:
                     sort_keys=True,
                 )
             )
+        elif args.command == "training":
+            from autopost.verify.commands import training_command
+
+            print(json.dumps(training_command(args), indent=2, sort_keys=True))
         elif args.command == "data":
             from autopost.data.commands import build_command, review_command
 

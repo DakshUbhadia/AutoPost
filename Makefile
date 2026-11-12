@@ -8,6 +8,7 @@ install: install-cpu
 
 install-cpu:
 	python -m pip install --requirement requirements/cpu-dev.lock
+	python -m pip install --requirement requirements/train-verify.lock
 	python -m pip install --no-deps --no-build-isolation --editable .
 
 install-toolchain-probe:

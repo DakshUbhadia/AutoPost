@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Literal
 
-CHECKER_ID = "exact_numeric@2"
+CHECKER_ID = "exact_numeric@3"
 MAX_CHARS = 200_000                 # refuse pathological inputs
 Marker = Literal["boxed", "answer_line", "final_answer_phrase"]
 
@@ -93,6 +93,7 @@ def _boxed_contents(text: str) -> list[str]:
             return out
         k = text.find("{", j)
         if k < 0 or text[j + 6:k].strip():
+            out.append("")  # malformed explicit answers must not vanish
             i = j + 6
             continue
         depth, m = 0, k
@@ -105,12 +106,14 @@ def _boxed_contents(text: str) -> list[str]:
                     out.append(text[k + 1:m])
                     break
             m += 1
+        if depth:
+            out.append("")
         i = m + 1
 
 
-_ANSWER_LINE = re.compile(r"^\s*(?:\*\*)?\s*(?:final\s+answer|answer)\s*(?:\*\*)?\s*[:：]\s*(.+?)\s*$",
+_ANSWER_LINE = re.compile(r"^[ \t]*(?:\*\*)?[ \t]*(?:final[ \t]+answer|answer)[ \t]*(?:\*\*)?[ \t]*[:：][ \t]*([^\n]*?)[ \t]*$",
                           re.IGNORECASE | re.MULTILINE)
-_FINAL_PHRASE = re.compile(r"final answer is\s*[:：]?\s*([^\n]+?)\s*(?:\.\s*)?$",
+_FINAL_PHRASE = re.compile(r"final answer is[ \t]*[:：]?[ \t]*([^\n]*?)[ \t]*(?:\.[ \t]*)?$",
                            re.IGNORECASE | re.MULTILINE)
 _NUMBER_TOKEN = re.compile(r"[+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?|[+-]?\d+(?:\.\d+)?(?:\s*/\s*\d+)?|[+-]?\.\d+")
 _HEDGE = re.compile(r"\b(or|either|possibly|maybe|alternatively)\b", re.IGNORECASE)
@@ -135,7 +138,10 @@ def extract_final(text: str) -> tuple[str, list[Fraction], str | None]:
     cands = _marker_candidates(text)
     raw = [c for lst in cands.values() for c in lst]
     if raw:
-        vals = [v for v in (parse_number(r) for r in raw) if v is not None]
+        parsed = [parse_number(r) for r in raw]
+        if any(value is None for value in parsed):
+            return "parse_error", [], raw[-1]
+        vals = parsed
         distinct = sorted(set(vals))
         if not distinct:
             return "parse_error", [], raw[-1]
@@ -176,6 +182,8 @@ def score_content(text: str, reference: str, truncated: bool = False) -> Numeric
 def format_compliant(text: str, marker: Marker) -> bool:
     """Exactly one occurrence of the instructed marker, and no other marker
     carrying a different value. Used by the format-compliance guardrail."""
+    if len(text) > MAX_CHARS:
+        return False
     cands = _marker_candidates(text)
     if len(cands[marker]) != 1:
         return False

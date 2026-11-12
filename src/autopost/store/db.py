@@ -17,6 +17,7 @@ MIGRATIONS = {
     1: "schema.sql",
     2: "migrations/002_durable_stores.sql",
     3: "migrations/003_datasets.sql",
+    4: "migrations/004_training_signals.sql",
 }
 
 
