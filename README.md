@@ -16,6 +16,10 @@ make selfcheck
 
 The CPU environment does not download models or install the GPU training stack.
 
+CPU CI pins `ubuntu-24.04`, which supports the pinned CPython 3.13.7 build.
+Update the runner and Python pins together after checking the
+[setup-python version manifest](https://github.com/actions/python-versions/blob/main/versions-manifest.json).
+
 ## Toolchain API probe
 
 Create and activate a separate virtual environment, then run:
