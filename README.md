@@ -43,6 +43,9 @@ The checked-in probe lock reproduces the validated CPython 3.13.7 Windows CPU in
 - [Sprint 3 acceptance evidence](docs/SPRINT_3_AUDIT.md)
 - [Training verification, curriculum, and label reviews](docs/VERIFICATION.md)
 - [Sprint 4 acceptance evidence](docs/SPRINT_4_AUDIT.md)
+- [Local execution and development GPU checks](docs/EXECUTION.md)
+- [Sprint 5 implementation and outstanding GPU gate](docs/SPRINT_5_AUDIT.md)
+- [Kaggle notebook and GitHub evidence upload](docs/KAGGLE.md)
 
 Inspect the composed development configuration and identities:
 
@@ -78,3 +81,13 @@ Sprint 4 adds a pinned CPU verifier dependency to `make install-cpu`.
 `python -m autopost.cli training --help` exposes rollout verification, curriculum
 reservations, promotion refresh and independent label review. The
 [training-signal guide](docs/VERIFICATION.md) covers inputs and evidence.
+
+Exercise the subprocess backend or inspect development GPU readiness:
+
+```text
+python -m autopost.cli execution fixture
+python scripts/probe_dev_model.py
+```
+
+The probe reports blockers without downloading models. The [execution guide](docs/EXECUTION.md)
+explains the opt-in Linux GPU run, including a separate float16 T4 profile.

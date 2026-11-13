@@ -43,7 +43,8 @@ def canonical_bytes(value: object) -> bytes:
     if isinstance(value, DurableModel):
         model = value
         value = model.model_dump(mode="python")
-        validate_json(value, paths=True)
+        # Model revalidation below applies field-aware path checks, including
+        # opaque model-generated text and nested contracts.
         # Frozen top-level models can still contain mutable JSON maps. Recheck
         # invariants here so mutation/model_copy cannot bypass the boundary.
         type(model).model_validate_json(json.dumps(value, allow_nan=False))

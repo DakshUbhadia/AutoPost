@@ -14,14 +14,14 @@ rollout_sampling:
   top_p: 1.0
   top_k: -1
   min_p: 0.0
-  max_new_tokens: null
+  max_new_tokens: 128
 eval_sampling:
   schema_version: 1
   temperature: 0.7
   top_p: 0.8
   top_k: 20
   min_p: 0.0
-  max_new_tokens: null
+  max_new_tokens: 128
 lora:
   r: 32
   alpha: 64
@@ -37,9 +37,9 @@ importance_sampling:
 backend_options:
   vllm_mode: colocate
   use_vllm: true
-  vllm_gpu_memory_utilization: null
+  vllm_gpu_memory_utilization: 0.35
   verifier_pool:
-    workers: null
+    workers: 2
     timeout_s_cpu: 5
-    container: autopost-verifier:pinned
+    backend: subprocess
 validation_mode: dev

@@ -116,6 +116,16 @@ def main(argv: list[str] | None = None) -> int:
         ),
         default="success",
     )
+    execution = commands.add_parser("execution").add_subparsers(dest="action", required=True)
+    for action in ("capabilities", "spike", "fixture"):
+        command = execution.add_parser(action)
+        if action != "fixture":
+            command.add_argument("--base-yaml", default="configs/base.yaml")
+            command.add_argument("--execution", help="execution profile relative to base config")
+        if action != "capabilities":
+            command.add_argument("--root", default="runs/dev-spike" if action == "spike" else "runs/subprocess-fixture")
+        if action == "spike":
+            command.add_argument("--run-gpu", action="store_true", help="allow model downloads and GPU phases")
     data = commands.add_parser("data").add_subparsers(dest="action", required=True)
     data_build = data.add_parser("build-dev")
     data_build.add_argument("--root", default="runs/development-data")
@@ -221,6 +231,12 @@ def main(argv: list[str] | None = None) -> int:
                     sort_keys=True,
                 )
             )
+        elif args.command == "execution":
+            from autopost.execution.commands import execute_command
+
+            result, status = execute_command(args)
+            print(json.dumps(result, indent=2, sort_keys=True))
+            return status
         elif args.command == "training":
             from autopost.verify.commands import training_command
 

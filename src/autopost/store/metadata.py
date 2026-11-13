@@ -338,6 +338,22 @@ class SQLiteMetadataStore:
                 result=decode_job_result(row["result"]) if row["result"] else None,
             )
 
+    def start_attempt(self, handle: JobHandle) -> bool:
+        handle.to_bytes()
+        with self._transaction() as db:
+            row = self._attempt(db, handle)
+            if row["status"] != "pending":
+                return False
+            db.execute(
+                "UPDATE ap_attempts SET status='running',updated_at=CURRENT_TIMESTAMP WHERE job_id=? AND attempt=?",
+                (handle.job_id, handle.attempt),
+            )
+            self._refresh_job_status(db, handle.job_id)
+            _, spec = self._job(db, handle.job_id)
+            self._event(db, spec.run_id, handle.job_id, "attempt_status",
+                        {"attempt": handle.attempt, "status": "running"})
+            return True
+
     def record_attempt(self, handle: JobHandle, status: JobStatus) -> None:
         handle.to_bytes()
         TypeAdapter(JobStatus).validate_python(status)

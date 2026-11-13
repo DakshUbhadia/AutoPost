@@ -1,0 +1,53 @@
+{
+  "backend_source_sha256": "61e23d8a3e90f6b435090a6d1869a4560c01729cdc0063d9c1b218c3ee24b983",
+  "capabilities": {
+    "backend_id": "local-vllm@1",
+    "capabilities": {
+      "colocated_generation": false,
+      "dtypes": [],
+      "generation_backends": [],
+      "importance_sampling_modes": [],
+      "lora": false,
+      "max_context_tokens": 4096,
+      "max_tensor_parallel_size": 1,
+      "quantizations": [],
+      "schema_version": 1,
+      "training_backends": []
+    },
+    "compatible": false,
+    "reasons": [
+      "vLLM execution requires Linux (native or a compatible GPU environment)",
+      "CUDA GPU is unavailable",
+      "trl must be 1.17.1",
+      "transformers must be 5.20.1",
+      "peft must be 0.21.2",
+      "torch must be 2.14.0",
+      "vllm must be 0.33.0",
+      "vllm is not installed",
+      "requested dtype is unsupported; there is no automatic precision fallback",
+      "requested tensor parallelism exceeds visible devices"
+    ],
+    "schema_version": 1,
+    "stack_id": "d953e5ddf4474252307b7df74c5c4372457984a3c01bf1a598a19095ac07b39e"
+  },
+  "checks": {},
+  "execution_profile_id": "d0c184daed30d53205d7bd4752b1ab88f5f4d30d23f3fc319ff495c345a9dbc3",
+  "model_spec_id": "486d45e495e8b5193bb8f46163582e655409c16d70e8b5008d72e3189e0b5566",
+  "runtime": {
+    "cuda_available": false,
+    "devices": [],
+    "platform": "Windows",
+    "python": "3.13.7",
+    "runtime_error": "ModuleNotFoundError",
+    "versions": {
+      "peft": null,
+      "torch": null,
+      "transformers": null,
+      "trl": null,
+      "vllm": null
+    }
+  },
+  "schema": "autopost.dev-compatibility/1",
+  "scientific_execution": false,
+  "status": "BLOCKED"
+}

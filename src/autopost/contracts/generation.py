@@ -1,6 +1,8 @@
 """Generation values contain no tokenizer, tensor or backend runtime types."""
 
-from pydantic import JsonValue, model_validator
+from typing import Annotated
+
+from pydantic import Field, JsonValue, model_validator
 
 from .base import DurableModel
 from .models import PositiveInt, SamplingConfig
@@ -8,6 +10,7 @@ from .refs import EvalReadId, JobId, PromptId, StateRef
 
 
 class GenerationPrompt(DurableModel):
+    opaque_text_fields = frozenset({"text"})
     prompt_id: PromptId
     template_id: str
     text: str
@@ -28,9 +31,10 @@ class EvalGenerationRequest(RolloutRequest):
 
 
 class GeneratedCompletion(DurableModel):
+    opaque_text_fields = frozenset({"text"})
     prompt_id: PromptId
     template_id: str
-    sample_idx: int
+    sample_idx: Annotated[int, Field(ge=0)]
     text: str
     token_ids: tuple[int, ...]
     sampled_logprobs: tuple[float, ...]
@@ -40,6 +44,12 @@ class GeneratedCompletion(DurableModel):
     def aligned_tokens(self):
         if len(self.token_ids) != len(self.sampled_logprobs):
             raise ValueError("token IDs and sampled log probabilities must align")
+        if any(token < 0 for token in self.token_ids) or any(
+            value > 0 for value in self.sampled_logprobs
+        ):
+            raise ValueError(
+                "token IDs must be nonnegative and log probabilities nonpositive"
+            )
         return self
 
 

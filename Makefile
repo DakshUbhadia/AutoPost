@@ -45,6 +45,9 @@ data:
 hidden:
 	python scripts/build_hidden_perturbations.py
 
-spike phase1 gonogo run report:
+spike:
+	python scripts/probe_dev_model.py
+
+phase1 gonogo run report:
 	@echo not implemented yet (see roadmap)
 	@exit 1

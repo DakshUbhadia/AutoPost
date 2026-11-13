@@ -1,5 +1,13 @@
 # Revision 3 contracts and configuration
 
+Sprint 5 implements the executor/generation protocols and runtime capability
+checks; see [local execution](EXECUTION.md). `MetadataStore.start_attempt`
+atomically claims pending work without a schema change. Generation prompt and
+completion `text` fields are opaque evidence and may contain slash-prefixed
+LaTeX; identity/settings/manifests retain strict path checks, including when
+nested contracts are serialized. Token/log-probability alignment and valid
+sample/token indices are enforced at the generation boundary.
+
 Sprint 4 adds version-1 training-signal contracts in `contracts/signals.py` and
 metadata migration 4. See [verification and curriculum](VERIFICATION.md).
 

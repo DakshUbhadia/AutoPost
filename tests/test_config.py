@@ -23,8 +23,6 @@ def test_base_config_loads_and_reports_known_pin_placeholders():
     cfg = load_config(ROOT / "configs/base.yaml")
     pins = {p for p, kind in unresolved_fields(cfg) if kind == "pin"}
     assert pins == {
-        "model.revision",
-        "model.tokenizer_revision",
         "data.dedup.embed_model_revision",
     }
 

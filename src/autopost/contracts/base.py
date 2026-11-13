@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Literal, Self, get_origin
+from typing import ClassVar, Literal, Self, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, model_validator
 
@@ -28,6 +28,7 @@ def _boundary_value(value: object) -> object:
 
 
 class DurableModel(BaseModel):
+    opaque_text_fields: ClassVar[frozenset[str]] = frozenset()
     model_config = ConfigDict(
         extra="forbid", frozen=True, strict=True, validate_default=True
     )
@@ -42,7 +43,25 @@ class DurableModel(BaseModel):
                 raise UnsupportedVersionError(
                     f"{cls.__name__}: unsupported schema_version {version!r}"
                 )
-        validate_json(_boundary_value(value), paths=True)
+        payload = _boundary_value(value)
+        validate_json(payload)
+        if isinstance(payload, dict):
+
+            def nested_model(annotation):
+                return (
+                    isinstance(annotation, type)
+                    and issubclass(annotation, DurableModel)
+                    or any(nested_model(arg) for arg in get_args(annotation))
+                )
+
+            for key, child in payload.items():
+                field = cls.model_fields.get(key)
+                # Nested models validate their own fields. Opaque generated
+                # text may contain slash-prefixed math without being a locator.
+                if key not in cls.opaque_text_fields and not (
+                    field and nested_model(field.annotation)
+                ):
+                    validate_json(child, paths=True)
         if info.mode == "json" and isinstance(value, dict):
             # A before-model validator materializes JSON arrays as lists.
             # Normalize only tuple fields, leaving strict scalar checks intact.
